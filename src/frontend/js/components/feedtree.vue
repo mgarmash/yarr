@@ -19,8 +19,14 @@
         <span class="ps-2 text-end opacity-50">{{ stats.total[filterSelected] }}</span>
       </div>
     </div>
+    <component
+      v-for="branch in branches"
+      :key="branch.name"
+      :is="branch.name ? 'details' : 'div'"
+      :open="branch.name && branch.nodes.some(isSelected) ? true : undefined">
+      <summary v-if="branch.name" class="c-listitem user-select-none">{{ branch.name }}</summary>
     <template
-      v-for="node in tree"
+      v-for="node in branch.nodes"
       :key="node.type === 'folder' ? 'folder:' + node.folder.id : 'feed:' + node.feed.id">
       <template v-if="node.type === 'folder'">
         <div
@@ -35,7 +41,7 @@
             </div>
           </div>
           <div class="flex-grow-1 min-w-0 text-truncate">
-            {{ node.folder.title }}
+            {{ node.folder.title.split(' / ').at(-1) }}
           </div>
           <div class="flex-shrink-0" v-if="filterSelected">
             <span class="ps-2 text-end opacity-50">{{
@@ -103,6 +109,7 @@
         </div>
       </template>
     </template>
+    </component>
   </div>
 </template>
 
@@ -138,6 +145,27 @@ export default defineComponent({
       required: true,
     },
     feedErrors: { type: Object as PropType<Record<number, string>>, required: true },
+  },
+  computed: {
+    branches(): { name: string; nodes: FeedTreeNode[] }[] {
+      const grouped = new Map<string, FeedTreeNode[]>();
+      for (const node of this.tree) {
+        const title = node.type === "folder" ? node.folder.title : "";
+        const separator = title.indexOf(" / ");
+        const name = separator < 0 ? "" : title.slice(0, separator);
+        if (!grouped.has(name)) grouped.set(name, []);
+        grouped.get(name)!.push(node);
+      }
+      return Array.from(grouped, ([name, nodes]) => ({ name, nodes }));
+    },
+  },
+  methods: {
+    isSelected(node: FeedTreeNode): boolean {
+      return node.type === "feed"
+        ? this.modelValue === `feed:${node.feed.id}`
+        : this.modelValue === `folder:${node.folder.id}` ||
+            node.feeds.some(child => this.modelValue === `feed:${child.feed.id}`);
+    },
   },
   emits: ["update:modelValue", "toggle-folder"],
 });

@@ -12,7 +12,7 @@
       :style="{ width: feedListWidth + 'px' }">
       <v-drag :width="feedListWidth" @resize="resizeFeedList"></v-drag>
       <div class="px-2 py-1 d-flex align-items-center">
-        <v-icon class="mx-2" name="anchor" />
+        <strong class="mx-2">Knowledge Hub</strong>
         <div class="flex-grow-1"></div>
         <button
           class="c-button-pill ms-1"
